@@ -1,0 +1,4 @@
+[submodule "external/heregoes"]
+	path = external/heregoes
+	url = https://github.com/heregoesradio/heregoes.git
+	branch = main
