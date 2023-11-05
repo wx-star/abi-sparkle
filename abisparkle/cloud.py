@@ -19,16 +19,15 @@
 
 """Cloud masking for ABI"""
 
-from heregoes import heregoes_njit
+from heregoes.util import njit
 
 
 class CloudMask:
     def __init__(self, c07_image, c14_image):
-
         self.cloud_mask = self.wfabba_clouds(c07_image.cmi, c14_image.cmi)
 
     @staticmethod
-    @heregoes_njit
+    @njit.heregoes_njit
     def wfabba_clouds(c07_bt, c14_bt):
         # https://www.star.nesdis.noaa.gov/goesr/docs/ATBD/Fire.pdf
         # pg 21-22

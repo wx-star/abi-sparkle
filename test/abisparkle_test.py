@@ -213,7 +213,7 @@ def test_sparkle_stats():
     assert (
         cluster_centroid_meta_c07_rf_dev
         == cluster_centroid_stats_c07_rf_dev
-        == 0.1003152
+        == 0.1003153
     )
 
     cluster_centroid_meta_c14_bt_dev = sparkle.SDCAMeta.get_idx(cluster_centroid_idx_2)[
@@ -256,7 +256,7 @@ def test_sparkle_stats():
     assert (
         cluster_centroid_meta_c07_rf_dev
         == cluster_centroid_stats_c07_rf_dev
-        == 0.0418818
+        == 0.0418817
     )
 
     cluster_centroid_meta_c14_bt_dev = sparkle.SDCAMeta.get_idx(cluster_centroid_idx_2)[
@@ -378,5 +378,5 @@ def test_water():
 
 def test_nirrefl():
     assert sparkle.c07_nirrefl.rf.dtype == np.float32
-    assert sparkle.c07_nirrefl.rf[cluster_centroid_idx_1].item() == 10.882692337036133
-    assert sparkle.c07_nirrefl.rf[cluster_centroid_idx_2].item() == 0.23989807069301605
+    assert sparkle.c07_nirrefl.rf[cluster_centroid_idx_1].item() == 10.882698059082031
+    assert sparkle.c07_nirrefl.rf[cluster_centroid_idx_2].item() == 0.23989787697792053

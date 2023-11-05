@@ -20,11 +20,11 @@
 """Windowed deviation detection algorithm"""
 
 import numpy as np
-from heregoes import heregoes_njit_noparallel, util
+from heregoes.util import njit, window_slice
 from numba.core import types as ntypes
 
 
-@heregoes_njit_noparallel
+@njit.heregoes_njit_noparallel
 def sparkle(
     c02_rf,
     c05_rf,
@@ -52,7 +52,6 @@ def sparkle(
 
     algo_passes = 1
     while algo_passes <= algo_params["max_algo_passes"]:
-
         # loop over every pixel marked "False" in skip_mask
         for idx in np.argwhere(~skip_mask):
             idx = tuple((ntypes.int64(idx[0]), ntypes.int64(idx[1])))
@@ -63,7 +62,7 @@ def sparkle(
             )
 
             # skip pixels that are within exclude_dqf_radius of a bad DQF
-            bad_dqf_window = util.window_slice(
+            bad_dqf_window = window_slice(
                 bad_dqf_mask,
                 idx,
                 outer_radius=algo_params["exclude_dqf_radius"],
@@ -116,26 +115,26 @@ def sparkle(
                 continue
 
             # take windows of each image and discard validated and invalidated pixels from the statistical background
-            discard_mask_window = util.window_slice(
+            discard_mask_window = window_slice(
                 discard_mask, idx, outer_radius=window_radius, replace_inner=True
             )
 
-            c02_rf_window = util.window_slice(
+            c02_rf_window = window_slice(
                 c02_rf, idx, outer_radius=window_radius, replace_inner=True
             )
             c02_rf_window.ravel()[np.nonzero(discard_mask_window.ravel())] = np.nan
 
-            c05_rf_window = util.window_slice(
+            c05_rf_window = window_slice(
                 c05_rf, idx, outer_radius=window_radius, replace_inner=True
             )
             c05_rf_window.ravel()[np.nonzero(discard_mask_window.ravel())] = np.nan
 
-            c07_rf_window = util.window_slice(
+            c07_rf_window = window_slice(
                 c07_rf, idx, outer_radius=window_radius, replace_inner=True
             )
             c07_rf_window.ravel()[np.nonzero(discard_mask_window.ravel())] = np.nan
 
-            c14_bt_window = util.window_slice(
+            c14_bt_window = window_slice(
                 c14_bt, idx, outer_radius=window_radius, replace_inner=True
             )
             c14_bt_window.ravel()[np.nonzero(discard_mask_window.ravel())] = np.nan
@@ -198,7 +197,7 @@ def sparkle(
     return validated_mask
 
 
-@heregoes_njit_noparallel
+@njit.heregoes_njit_noparallel
 def window_sizer(
     arr,
     idx,
@@ -214,9 +213,7 @@ def window_sizer(
     window_iter = 1
     while window_iter <= max_window_iter:
         window_radius = first_radius * window_iter
-        window = util.window_slice(
-            arr, idx, outer_radius=window_radius, replace_inner=True
-        )
+        window = window_slice(arr, idx, outer_radius=window_radius, replace_inner=True)
 
         if window.size == int(np.square(2 * window_radius + 1)):
             window_valid_proportion = np.count_nonzero(~window) / window.size

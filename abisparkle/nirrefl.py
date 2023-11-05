@@ -20,8 +20,8 @@
 """Calculates 3.9 μm reflectance factor on ABI"""
 
 import numpy as np
-from heregoes import heregoes_njit, util
-from heregoes.instrument import abi
+from heregoes.goesr import abi
+from heregoes.util import make_8bit, njit
 from pyspectral.rsr_reader import RelativeSpectralResponse
 from pyspectral.solar import TOTAL_IRRADIANCE_SPECTRUM_2000ASTM, SolarIrradianceSpectrum
 
@@ -36,14 +36,14 @@ class ABINIRRefl:
         # calculate equivalent 3.9 μm radiance from 11.2 μm brightness temperature
         self.c07_emissive_rad = abi.bt2rad(
             self.c14_image.cmi,
-            self.c07_image.meta.instrument_meta.planck_fk1,
-            self.c07_image.meta.instrument_meta.planck_fk2,
-            self.c07_image.meta.instrument_meta.planck_bc1,
-            self.c07_image.meta.instrument_meta.planck_bc2,
+            self.c07_image.abi_data["planck_fk1"][...].item(),
+            self.c07_image.abi_data["planck_fk2"][...].item(),
+            self.c07_image.abi_data["planck_bc1"][...].item(),
+            self.c07_image.abi_data["planck_bc2"][...].item(),
         )
 
         self.abi_rsr = RelativeSpectralResponse(
-            self.c07_image.meta.platform_ID_safe, "abi"
+            self.c07_image.abi_data.platform_ID_safe, "abi"
         )
         self.c07_solar_irradiance = np.atleast_1d(
             (
@@ -56,13 +56,13 @@ class ABINIRRefl:
         # convert from W/m^2/μm to mW/m^2/cm^-1
         self.c07_solar_irradiance = abi.rad_wvl2wvn(
             self.c07_solar_irradiance,
-            *self.c07_image.meta.instrument_meta.coefficients.eqw
+            *self.c07_image.abi_data.instrument_coefficients.eqw,
         )
 
         self.c07_solar_radiance = self.c07_solar_irradiance / np.pi
 
     @staticmethod
-    @heregoes_njit
+    @njit.heregoes_njit
     def _calc_rf(c07_rad, c07_emissive_rad, c07_esd, c07_solar_radiance):
         # following https://doi.org/10.1016/0169-8095(94)90096-5
         return (
@@ -76,7 +76,7 @@ class ABINIRRefl:
             self._rf = self._calc_rf(
                 self.c07_image.rad,
                 self.c07_emissive_rad,
-                self.c07_image.meta.instrument_meta.esd,
+                self.c07_image.abi_data["earth_sun_distance_anomaly_in_AU"][...].item(),
                 self.c07_solar_radiance.item(),
             )
 
@@ -89,7 +89,7 @@ class ABINIRRefl:
     @property
     def bv(self):
         if self._bv is None:
-            self._bv = util.make_8bit(self.rf * 255)
+            self._bv = make_8bit(self.rf * 255)
 
         return self._bv
 

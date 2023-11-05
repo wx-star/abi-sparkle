@@ -24,7 +24,8 @@ import time
 
 import cv2
 import numpy as np
-from heregoes import ancillary, heregoes_njit, image, meta
+from heregoes import ancillary, image, load
+from heregoes.util import njit
 
 from abisparkle import (
     cloud,
@@ -53,10 +54,10 @@ class Sparkle:
         self.nav = nav
 
         # sets C02 as the "source" image - all datasets will be resized to the size of C02
-        self.source_meta = meta.NCMeta(self.c02_nc)
+        self.source_abi_data = load(self.c02_nc)
         self.source_shape = (
-            self.source_meta.instrument_meta.y,
-            self.source_meta.instrument_meta.x,
+            self.source_abi_data.dimensions["y"].size,
+            self.source_abi_data.dimensions["x"].size,
         )
 
         #############################################################################
@@ -74,13 +75,15 @@ class Sparkle:
         if self.water_mask is None:
             s_time = time.time()
             self.water_mask = ancillary.WaterMask(
-                self.source_meta, gshhs_scale="intermediate", rivers=True
+                self.source_abi_data, gshhs_scale="intermediate", rivers=True
             ).data["water_mask"]
             print("setup water:", time.time() - s_time)
 
         if self.nav is None:
             s_time = time.time()
-            self.nav = sparklenav.SparkleNavigation(self.source_meta, precise_sun=False)
+            self.nav = sparklenav.SparkleNavigation(
+                self.source_abi_data, precise_sun=False
+            )
             print("setup nav:", time.time() - s_time)
         #############################################################################
         #############################################################################
@@ -157,7 +160,7 @@ class Sparkle:
     def check_daylit_land_portion(self):
         """This is meant to quickly test whether enough of an image is "daylit land" to be worth running the full algorithm on"""
 
-        @heregoes_njit
+        @njit.heregoes_njit
         def _daylit_land(sun_za, water_mask, subsample_factor, algo_params):
             sun_za_subsampled = sun_za[::subsample_factor, ::subsample_factor]
             water_mask_subsampled = water_mask[::subsample_factor, ::subsample_factor]
@@ -202,7 +205,6 @@ class Sparkle:
 
         original_dtype = arr.dtype
         if y_factor != 1 and x_factor != 1:
-
             if original_dtype == bool:
                 arr = arr.astype(np.uint8)
 

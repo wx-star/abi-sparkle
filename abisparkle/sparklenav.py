@@ -20,7 +20,8 @@
 """Runs the standard ABI navigation routines as well as calculations for specular reflection vectors"""
 
 import numpy as np
-from heregoes import heregoes_njit, navigation
+from heregoes import navigation
+from heregoes.util import njit
 
 
 class SparkleNavigation(navigation.ABINavigation):
@@ -87,7 +88,7 @@ class SparkleNavigation(navigation.ABINavigation):
         self._glint_angle = value
 
     @staticmethod
-    @heregoes_njit
+    @njit.heregoes_njit
     def calc_glint_angle(sun_az_rad, sun_za_rad, sat_az_rad, sat_za_rad):
         # angle between Sun and satellite vectors
         return np.atleast_1d(
@@ -100,7 +101,7 @@ class SparkleNavigation(navigation.ABINavigation):
         ).astype(np.float32)
 
     @staticmethod
-    @heregoes_njit
+    @njit.heregoes_njit
     def calc_reflections(sun_az_rad, sun_za_rad, sat_az_rad, sat_za_rad):
         # unit vector of sun
         s_x = np.sin(sun_za_rad) * np.cos(sun_az_rad)
@@ -128,7 +129,7 @@ class FastSparkleNavigation(SparkleNavigation):
 
     def __init__(
         self,
-        abi_meta,
+        abi_data,
         lat_deg,
         lon_deg,
         sat_za,
@@ -136,8 +137,7 @@ class FastSparkleNavigation(SparkleNavigation):
         precise_sun=False,
         subsample_factor=1,
     ):
-
-        self.abi_meta = abi_meta
+        self.abi_data = abi_data
         self.lat_deg = lat_deg[::subsample_factor, ::subsample_factor]
         self.lon_deg = lon_deg[::subsample_factor, ::subsample_factor]
         self.sat_za = sat_za[::subsample_factor, ::subsample_factor]
@@ -156,11 +156,11 @@ class FastSparkleNavigation(SparkleNavigation):
         self._sun_az = None
         self._area_m = None
 
-        self.time = self.abi_meta.instrument_meta.midpoint_time
+        self.time = self.abi_data.midpoint_time
 
         self.x_rad, self.y_rad = np.meshgrid(
-            self.abi_meta.instrument_meta.projection_x_coordinate,
-            self.abi_meta.instrument_meta.projection_y_coordinate,
+            self.abi_data["x"][...],
+            self.abi_data["y"][...],
         )
         self.x_rad = self.x_rad[::subsample_factor, ::subsample_factor]
         self.y_rad = self.y_rad[::subsample_factor, ::subsample_factor]

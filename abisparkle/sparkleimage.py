@@ -21,7 +21,7 @@
 
 import cv2
 import numpy as np
-from heregoes import util
+from heregoes.util import crop_center
 
 
 class SDCAImage:
@@ -379,9 +379,7 @@ class SDCAImage:
     def get_crops(self, img):
         crops = {}
         for cluster_id, cluster_idx in self.sparkle.SDCAMeta.cluster_map.items():
-            crops[cluster_id] = util.crop_center(
-                getattr(self, img), cluster_idx, (201, 201)
-            )
+            crops[cluster_id] = crop_center(getattr(self, img), cluster_idx, (201, 201))
 
         return crops
 

@@ -22,7 +22,7 @@
 import uuid
 
 import numpy as np
-from heregoes.instrument.abi import rad_wvn2wvl
+from heregoes.goesr.abi import rad_wvn2wvl
 from scipy import ndimage
 
 from abisparkle.sparklenav import SparkleNavigation
@@ -46,10 +46,9 @@ class SDCAMeta:
 
         # for each cluster of adjacent True pixels in the valid_sparkle image:
         for cluster in range(1, self.num_clusters + 1):
-
             # get some information about each cluster
             cluster_id = (
-                sparkle.source_meta.time_coverage_start.strftime(safe_time_format)
+                sparkle.source_abi_data.time_coverage_start.strftime(safe_time_format)
                 + "_"
                 + str(uuid.uuid4())
             )
@@ -97,29 +96,33 @@ class SDCAMeta:
                 idx_area_m = super(type(sparkle.nav), sparkle.nav).pixel_area(
                     np.atleast_1d(sparkle.nav.y_rad[idx]),
                     np.atleast_1d(sparkle.nav.x_rad[idx]),
-                    np.atleast_1d(sparkle.nav.abi_meta.instrument_meta.semi_major_axis),
                     np.atleast_1d(
-                        sparkle.nav.abi_meta.instrument_meta.perspective_point_height
+                        sparkle.nav.abi_data["goes_imager_projection"].semi_major_axis
                     ),
-                    np.atleast_1d(sparkle.nav.abi_meta.instrument_meta.ifov),
+                    np.atleast_1d(
+                        sparkle.nav.abi_data[
+                            "goes_imager_projection"
+                        ].perspective_point_height
+                    ),
+                    np.atleast_1d(sparkle.nav.abi_data.resolution_ifov),
                 )
 
                 # store the emissive radiance in wavelength space to match reflective radiance
                 c07_rad_wvl = rad_wvn2wvl(
                     np.atleast_1d(sparkle.c07_image.rad[idx]),
-                    *sparkle.c07_image.meta.instrument_meta.coefficients.eqw,
+                    *sparkle.c07_image.abi_data.instrument_coefficients.eqw,
                 )
                 c14_rad_wvl = rad_wvn2wvl(
                     np.atleast_1d(sparkle.c14_image.rad[idx]),
-                    *sparkle.c14_image.meta.instrument_meta.coefficients.eqw,
+                    *sparkle.c14_image.abi_data.instrument_coefficients.eqw,
                 )
 
                 idx_meta = {
                     "event": "valid_sparkle",
-                    "time_coverage_start": sparkle.c02_image.meta.time_coverage_start.strftime(
+                    "time_coverage_start": sparkle.c02_image.abi_data.time_coverage_start.strftime(
                         db_time_format
                     ),
-                    "time_coverage_end": sparkle.c02_image.meta.time_coverage_end.strftime(
+                    "time_coverage_end": sparkle.c02_image.abi_data.time_coverage_end.strftime(
                         db_time_format
                     ),
                     "y": int(idx[0]),
@@ -146,10 +149,10 @@ class SDCAMeta:
                         "size": num_in_cluster,
                     },
                     "files": {
-                        "c02": sparkle.c02_image.meta.dataset_name,
-                        "c05": sparkle.c05_image.meta.dataset_name,
-                        "c07": sparkle.c07_image.meta.dataset_name,
-                        "c14": sparkle.c14_image.meta.dataset_name,
+                        "c02": sparkle.c02_image.abi_data.dataset_name,
+                        "c05": sparkle.c05_image.abi_data.dataset_name,
+                        "c07": sparkle.c07_image.abi_data.dataset_name,
+                        "c14": sparkle.c14_image.abi_data.dataset_name,
                     },
                     "dqfs": {
                         "c02": int(sparkle.c02_image.dqf[idx].item()),

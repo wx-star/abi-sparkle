@@ -20,7 +20,7 @@
 """Creates boolean masks used to filter the SDCA before the windowed deviation detection stage"""
 
 import numpy as np
-from heregoes import heregoes_njit, util
+from heregoes.util import fill_border, njit
 
 
 class SDCAMask:
@@ -46,7 +46,7 @@ class SDCAMask:
         )
 
     @staticmethod
-    @heregoes_njit
+    @njit.heregoes_njit
     def _finalize(validated_mask, invalidated_mask, skip_mask, algo_flags):
         # make sure pre-validated pixels don't contain any pre-invalidated ones
         validated_mask.ravel()[np.nonzero(invalidated_mask.ravel())] = False
@@ -74,7 +74,7 @@ class SDCAMask:
 
     @property
     def bad_dqf_mask(self):
-        @heregoes_njit
+        @njit.heregoes_njit
         def _bad_dqf(c02_dqf, c05_dqf, c07_dqf, c14_dqf):
             bad_dqf_mask = (
                 ((c02_dqf != 0) & (c02_dqf != 2))
@@ -97,7 +97,7 @@ class SDCAMask:
 
     @property
     def validated_mask(self):
-        @heregoes_njit
+        @njit.heregoes_njit
         def _validate(source_shape, c02_rf, c05_rf, c07_rf, algo_params, algo_flags):
             validated_mask = np.full(source_shape, False)
 
@@ -133,7 +133,7 @@ class SDCAMask:
 
     @property
     def invalidated_mask(self):
-        @heregoes_njit
+        @njit.heregoes_njit
         def _invalidate(
             source_shape,
             c02_rf,
@@ -255,7 +255,7 @@ class SDCAMask:
 
     @property
     def skip_mask(self):
-        @heregoes_njit
+        @njit.heregoes_njit
         def _skip(
             source_shape,
             cloud_mask,
@@ -277,7 +277,7 @@ class SDCAMask:
 
             # exclude border
             border_mask = np.full(source_shape, False)
-            util.fill_border(
+            fill_border(
                 border_mask,
                 width=algo_params["exclude_border_width"],
                 fill=True,
